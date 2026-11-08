@@ -1,0 +1,8 @@
+#pragma once
+#include <obs-module.h>
+#include <QString>
+
+inline QString text(const char *key)
+{
+  return QString::fromUtf8(obs_module_text(key));
+}

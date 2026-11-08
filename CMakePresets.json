@@ -1,0 +1,26 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "windows-x64",
+      "displayName": "Windows x64 (OBS SDK + Qt in CMAKE_PREFIX_PATH)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/windows-x64"
+    },
+    {
+      "name": "core-tests",
+      "displayName": "Core logic only (no OBS or Qt required)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/core-tests",
+      "cacheVariables": {"SCENE_DECK_BUILD_PLUGIN": "OFF", "BUILD_TESTING": "ON"}
+    }
+  ],
+  "buildPresets": [
+    {"name": "windows-x64", "configurePreset": "windows-x64", "configuration": "RelWithDebInfo"},
+    {"name": "core-tests", "configurePreset": "core-tests"}
+  ],
+  "testPresets": [
+    {"name": "core-tests", "configurePreset": "core-tests", "output": {"outputOnFailure": true}}
+  ]
+}

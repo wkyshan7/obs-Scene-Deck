@@ -1,0 +1,11 @@
+.deps/
+build*/
+cmake-build*/
+dist/
+.vs/
+.idea/
+CMakeUserPresets.json
+*.user
+*.log
+__pycache__/
+*.pyc

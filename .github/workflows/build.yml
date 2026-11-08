@@ -1,0 +1,65 @@
+name: Build native plugins
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install development dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build build-essential pkg-config libobs-dev qt6-base-dev libgl1-mesa-dev libx11-dev
+      - name: Build and package
+        run: bash scripts/build-unix.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scene-deck-linux-x86_64
+          path: dist/*.tar.gz
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build tools and OBS runtime
+        run: |
+          brew install cmake ninja
+          brew install --cask obs
+      - name: Prepare matching headers and Qt
+        run: python scripts/prepare-macos-sdk.py
+      - name: Build and package
+        run: bash scripts/build-unix.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scene-deck-${{ matrix.runner }}
+          path: dist/*.zip
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Prepare OBS runtime
+        shell: pwsh
+        run: |
+          Invoke-WebRequest 'https://github.com/obsproject/obs-studio/releases/download/33.0.1/OBS-Studio-33.0.1-Windows-x64.zip' -OutFile obs.zip
+          Expand-Archive obs.zip -DestinationPath .deps/obs-runtime
+      - name: Prepare headers and Qt
+        shell: pwsh
+        run: ./scripts/prepare-sdk.ps1 -ObsVersion 33.0.1
+      - name: Build and package
+        shell: pwsh
+        run: ./scripts/build.ps1 -ObsPath "${{ github.workspace }}/.deps/obs-runtime"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scene-deck-windows-x64
+          path: dist/*windows-x64.zip
