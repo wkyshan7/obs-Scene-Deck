@@ -2,6 +2,15 @@
 
 日期：2026-11-07。当前版本：0.4.0。
 
+## 2026-11-08 CI 修复
+
+- 根据用户提供的 `logs_115090134484.zip`：Windows、Ubuntu 构建、测试和产物上传成功；macOS ARM / Intel 编译失败。
+- 两种 macOS 架构均缺少 `simde/x86/sse2.h`。SDK 准备改为同时下载并校验匹配版本的官方 Qt 和 obs-deps；CMake 显式查找 SIMDe 头文件。
+- Intel 的 `QtGui/qwindow.h` 失败来自 OBS.app 的无头文件 Qt framework 覆盖开发 SDK 搜索路径。将 OBS.app 的 framework 路径限定于链接阶段。
+- 新增 SDK 离线回归检查，覆盖完整 Qt / SIMDe 准备、SHA256 拒绝损坏归档、缺失头文件后的重新提取、无效 SDK 不写成功标记；4 项检查通过，并加入 macOS CI。
+- 本次修改后重新完成 Linux 插件编译链接与核心 CTest，全部通过；`git diff --check` 通过。
+- macOS 编译、打包和加载仍需在 GitHub Actions / macOS 环境重新验证，未将本地检查视为 macOS CI 已通过。
+
 ## 0.4.0 跨平台与动作快捷键
 
 - 拆分原生窗口适配：Windows HWND、macOS NSView、Linux X11 EGL / Wayland；Linux 使用 OBS 已有的显示连接。

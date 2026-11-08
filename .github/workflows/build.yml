@@ -33,7 +33,9 @@ jobs:
         run: |
           brew install cmake ninja
           brew install --cask obs
-      - name: Prepare matching headers and Qt
+      - name: Check SDK preparation
+        run: python -m unittest discover -s tests -p 'test_macos_sdk.py' -v
+      - name: Prepare matching headers, Qt and obs-deps
         run: python scripts/prepare-macos-sdk.py
       - name: Build and package
         run: bash scripts/build-unix.sh

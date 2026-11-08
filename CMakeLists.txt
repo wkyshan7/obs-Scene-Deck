@@ -40,12 +40,18 @@ if((WIN32 AND SCENE_DECK_OBS_SOURCE AND SCENE_DECK_OBS_LIBS) OR
     target_link_libraries(scene-deck-obs INTERFACE
       "${SCENE_DECK_OBS_LIBS}/obs.lib" "${SCENE_DECK_OBS_LIBS}/obs-frontend-api.lib")
   else()
+    # The public OBS headers include SIMDe on both Intel and ARM macOS.
+    find_path(SCENE_DECK_SIMDE_INCLUDE NAMES simde/x86/sse2.h REQUIRED)
+    target_include_directories(scene-deck-obs SYSTEM INTERFACE "${SCENE_DECK_SIMDE_INCLUDE}")
     set(obs_frameworks "${SCENE_DECK_OBS_APP}/Contents/Frameworks")
     if(NOT EXISTS "${obs_frameworks}/libobs.framework/libobs" OR NOT EXISTS "${obs_frameworks}/obs-frontend-api.dylib")
       message(FATAL_ERROR "OBS.app does not contain the expected libobs/framework and frontend API. Use a matching Development SDK instead.")
     endif()
-    target_link_libraries(scene-deck-obs INTERFACE
-      "${obs_frameworks}/libobs.framework" "${obs_frameworks}/obs-frontend-api.dylib")
+    # A framework library in target_link_libraries also adds a compile-time -F.
+    # OBS.app contains stripped Qt frameworks that would shadow the SDK headers.
+    # Search the app's Frameworks only at link time.
+    target_link_options(scene-deck-obs INTERFACE "SHELL:-F \"${obs_frameworks}\" -framework libobs")
+    target_link_libraries(scene-deck-obs INTERFACE "${obs_frameworks}/obs-frontend-api.dylib")
   endif()
 else()
   add_library(scene-deck-obs INTERFACE)

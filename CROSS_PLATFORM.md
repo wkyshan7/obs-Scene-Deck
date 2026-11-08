@@ -64,7 +64,7 @@ python3.12 scripts/prepare-macos-sdk.py --obs-app /Applications/OBS.app
 bash scripts/build-unix.sh
 ```
 
-准备脚本从 OBS.app 读取版本，获取同一 tag 的 OBS 公开头文件，并按该版本声明下载、校验官方 universal Qt SDK，生成 `.deps/macos-sdk.cmake`。构建使用本机架构，Apple Silicon 为 arm64，Intel 为 x86_64；分别产生对应 ZIP，不将它们标为 universal 插件。
+准备脚本从 OBS.app 读取版本，获取同一 tag 的 OBS 公开头文件，并按该版本声明下载、校验官方 universal Qt SDK 和 obs-deps SDK（公开 OBS 头文件需要其中的 SIMDe），生成 `.deps/macos-sdk.cmake`。构建使用本机架构，Apple Silicon 为 arm64，Intel 为 x86_64；分别产生对应 ZIP，不将它们标为 universal 插件。
 
 关闭 OBS，将 ZIP 中的 `obs-scene-deck.plugin` 复制到：
 
@@ -72,13 +72,13 @@ bash scripts/build-unix.sh
 ~/Library/Application Support/obs-studio/plugins/
 ```
 
-Bundle 包含动态模块、Info.plist 及 `Contents/Resources/locale`。构建直接链接 OBS.app 的 libobs framework 与 frontend API，运行时从宿主 Frameworks 解析依赖。当前脚本生成开发构建，未配置 Developer ID 发布签名与公证；正式分发时需要在 macOS 完成签名、公证和安装验收。
+Bundle 包含动态模块、Info.plist 及 `Contents/Resources/locale`。构建直接链接 OBS.app 的 libobs framework 与 frontend API，运行时从宿主 Frameworks 解析依赖。OBS.app 的 Frameworks 路径仅参与链接，避免其中不含开发头文件的 Qt framework 抢占编译时的 SDK 搜索路径。当前脚本生成开发构建，未配置 Developer ID 发布签名与公证；正式分发时需要在 macOS 完成签名、公证和安装验收。
 
 已有独立 OBS / Qt Development SDK 时，可以不运行准备脚本，直接传递 `-DCMAKE_PREFIX_PATH=...` 给 `build-unix.sh`。SDK 必须同时提供 libobs 和 obs-frontend-api。
 
 ## CI 与检查
 
-`.github/workflows/build.yml` 定义 Windows x64、Ubuntu 24.04、macOS 15 ARM / Intel 四种构建任务，分别编译、运行核心测试并上传安装包。当前目录未配置远程仓库，工作流文件尚未在 GitHub Actions 实际执行。macOS 暂不能视为已验证发布版本。
+`.github/workflows/build.yml` 定义 Windows x64、Ubuntu 24.04、macOS 15 ARM / Intel 四种构建任务，分别编译、运行核心测试并上传安装包。2026-11-08 提供的 CI 日志显示 Windows / Linux 成功，macOS 因缺少 SIMDe 和 framework 搜索路径冲突失败；当前已针对两项原因修复，等待重新执行 macOS CI。macOS 暂不能视为已验证发布版本。
 
 核心逻辑测试可不依赖 OBS / Qt 单独运行：
 
